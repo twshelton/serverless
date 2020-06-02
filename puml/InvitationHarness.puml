@@ -48,7 +48,7 @@ note over th, tq
 end note
 th -> sdk: Initalize Member side (invitation + emulator config)
 sdk -> sdk: init()
-sdk -> th: ack
+sdk -> th: ack (not possible given Queue implementation)
 
 
 == CONNECTION TEST ==
@@ -59,8 +59,9 @@ th -> tq: load invite
 tq -> sdk: Connect (send invitation)
 
 alt Accept
-    note over evcx,magent
+    note over evcx,m
     TODO: REVIEW THIS FLOW?
+    This is correct
     end note
   alt Accept (X sec delay)
     magent -> magent: (delay X s)
@@ -72,38 +73,13 @@ alt Accept
     evcx -> evcx: Store in Wallet (CULedger)
 '    api -> evcx: Connection.create (REAL????)
     evcx -> api: update Connection.State
-    td -> api: poll for Connection
   else Deny (X = -1)
     note over evcx, magent
     no response sent (leads to timeout)
     end note
     evcx -> evcx: (timeout)
-    evcx -> api: <timeout>
+    evcx -> api: update Connection.State
 end
-
-
-
-
-
-
-
-'td -> sdk: Establish Connection (<InvitationJSON>)
-sdk -> evcx: Connect
-evcx -> sdk: connected
-note over magent
-add alt here
-end note
-evcx -> mwallet: Store in Wallet
-mwallet -> evcx
-evcx -> sdk: Connected
-
-sdk -> td: Connection established
-evcx -> api: Connected
-api -> store: Stores Connection JSON
-td -> store: Retrieve connection
-td -> td: compare connections
-
-td -> th: Report <ConnectionResults>
 
 == SEND CRED ==
 
@@ -125,6 +101,7 @@ alt Accept
   else FAILURE
     note over evcx,magent
     what happens now?
+    Wallet does not contain cred so can't respond to auth request
     end note
 
 else Deny
@@ -132,7 +109,7 @@ else Deny
 
 end
 evcx -> api: <results>
-
+th -> api: Poll for onboarded?
 == TEARDOWN ==
 
 th -> td: teardown
