@@ -1,0 +1,142 @@
+@startuml
+skinparam maxmessagesize 200
+skinparam arrowsize 10
+title Establish Connection
+
+
+
+box "Test Facility" #lightblue
+    participant "Harness" as th
+    participant "CUEmulator (td)" as td
+    participant "TestQ" as tq
+end box
+note over th, td
+  API, web page, python?
+end note
+
+box "CULedger API" #lightgreen
+    participant "Endpoint" as api
+    database "Credit Union Store" as store
+    participant "EnterpriseVCX" as evcx
+end box
+
+box "Member Harness" #lightblue
+    participant "MemberEmulator" as sdk
+
+    participant "MemberWallet" as mwallet
+end box
+
+box "Consumer Agent" #lightgreen
+    participant "Member Agent" as magent
+end box
+
+
+
+
+
+autonumber
+== INITIALIZATION ==
+
+'th -> td: Initialize CU side
+'th -> th: init()
+'td -> th: ack
+
+th -> td: Begin Test
+
+note over th, tq
+  TODO: separate config from invitation/connection
+end note
+th -> sdk: Initalize Member side (invitation + emulator config)
+sdk -> sdk: init()
+sdk -> th: ack
+
+
+== CONNECTION TEST ==
+
+td -> api: get /invitation
+api -> td: Invite JSON
+th -> tq: load invite
+tq -> sdk: Connect (send invitation)
+
+alt Accept
+    note over evcx,magent
+    TODO: REVIEW THIS FLOW?
+    end note
+  alt Accept (X sec delay)
+    magent -> magent: (delay X s)
+    magent -> evcx: <AcceptConnectionOffer>
+
+    evcx -> mwallet: Finalize Connection
+    mwallet -> mwallet: Store in Wallet (Member)
+    mwallet -> evcx: Connection Finalized
+    evcx -> evcx: Store in Wallet (CULedger)
+'    api -> evcx: Connection.create (REAL????)
+    evcx -> api: update Connection.State
+    td -> api: poll for Connection
+  else Deny (X = -1)
+    note over evcx, magent
+    no response sent (leads to timeout)
+    end note
+    evcx -> evcx: (timeout)
+    evcx -> api: <timeout>
+end
+
+
+
+
+
+
+
+'td -> sdk: Establish Connection (<InvitationJSON>)
+sdk -> evcx: Connect
+evcx -> sdk: connected
+note over magent
+add alt here
+end note
+evcx -> mwallet: Store in Wallet
+mwallet -> evcx
+evcx -> sdk: Connected
+
+sdk -> td: Connection established
+evcx -> api: Connected
+api -> store: Stores Connection JSON
+td -> store: Retrieve connection
+td -> td: compare connections
+
+td -> th: Report <ConnectionResults>
+
+== SEND CRED ==
+
+api -> evcx: Offer Cred
+evcx -> magent: <CredentialOffer>
+
+note over sdk
+  hook emulator in for decision.
+end note
+
+alt Accept
+  magent -> magent: (delay X s)
+  alt Success
+    magent -> evcx: <AcceptCredOffer>
+    note over evcx,magent
+    CredOffer/OfferAccept
+    process completes
+    end note
+  else FAILURE
+    note over evcx,magent
+    what happens now?
+    end note
+
+else Deny
+  evcx -> evcx: (timeout)
+
+end
+evcx -> api: <results>
+
+== TEARDOWN ==
+
+th -> td: teardown
+td -> td: teardown()
+th -> sdk: teardown
+sdk -> sdk: teardown()
+@enduml
