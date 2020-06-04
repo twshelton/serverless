@@ -19,30 +19,30 @@ if [ -z $MEMBERID ]; then
   exit
 fi
 
-INVITATION=`cd /Users/twshelton/Workspace/CULedger/CULedger.IdentityDocs/oauth/ && ./invitation.sh -i $MEMBERID | jq -r .invitationJSON` 
 PACKAGE=$(cat <<EOF
 {
   "memberId": "$MEMBERID",
-  "invitation": $INVITATION,
   "actions": [
     {
       "connect": {
-        "respondConnectionOfferAfter": 5,
-        "respondCredentialOfferAfter": 5
+        "respondConnectionOfferAfter": 10,
+        "respondCredentialOfferAfter": 10
       }
     },
     {
       "respondAuth": {
-        "respondAfter" : 5
-      },
+        "respondAfter" : 10
+      }
+    },
+    {
       "respondSimpleAuth": {
-        "respondAfter" : 5
+        "respondAfter" : 10
       }
 
     },
     {
       "respondProof": {
-        "respondAfter" : 5
+        "respondAfter" : 10
       }
 
     }
@@ -51,5 +51,5 @@ PACKAGE=$(cat <<EOF
 EOF
 )
 
-Message=`echo $PACKAGE | base64`
-az storage message put --content=$Message --queue-name="connection" --connection-string=$AZURE_STORAGE_CONNECTION_STRING
+Message=`echo $PACKAGE | base64 | awk 'BEGIN{ORS="";} {print}'`
+az storage message put --content=$Message --queue-name="initialize" --connection-string=$AZURE_STORAGE_CONNECTION_STRING

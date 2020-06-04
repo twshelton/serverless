@@ -4,7 +4,7 @@ from vcx.state import State
 import logging
 from pathlib import Path
 from os import path
-
+from time import sleep
 logger = logging.getLogger(__name__)
 
 async def checkProofs(member, connection_to_memberpass, respond_after):

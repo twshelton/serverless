@@ -19,38 +19,15 @@ if [ -z $MEMBERID ]; then
   exit
 fi
 
+INVITATION=`cat invite.json`
+
 PACKAGE=$(cat <<EOF
 {
   "memberId": "$MEMBERID",
-  "invitation": {},
-  "actions": [
-    {
-      "connect": {
-        "respondConnectionOfferAfter": 10,
-        "respondCredentialOfferAfter": 10
-      }
-    },
-    {
-      "respondAuth": {
-        "respondAfter" : 100
-      }
-    },
-    {
-      "respondSimpleAuth": {
-        "respondAfter" : 100
-      }
-
-    },
-    {
-      "respondProof": {
-        "respondAfter" : 100
-      }
-
-    }
-  ]
+  "invitation": $INVITATION
 }
 EOF
 )
-
-Message=`echo $PACKAGE | base64`
-az storage message put --content=$Message --queue-name="connection" --connection-string=$AZURE_STORAGE_CONNECTION_STRING
+#need to encode the message and then remove the line breaks
+Message=`echo $PACKAGE | base64 | awk 'BEGIN{ORS="";} {print}'`
+az storage message put --queue-name="connection-$MEMBERID" --connection-string=$AZURE_STORAGE_CONNECTION_STRING --content=$Message 
