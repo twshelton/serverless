@@ -48,22 +48,20 @@ note over th, tq
 end note
 th -> sdk: Initalize Member side (invitation + emulator config)
 sdk -> sdk: init()
-sdk -> th: ack (not possible given Queue implementation)
+sdk -> th: ack (delete msg from q)
 
 
 == CONNECTION TEST ==
 
 td -> api: get /invitation
+api -> evcx: get invite
+evcx -> api: return <inviteJSON>
 api -> td: Invite JSON
 th -> tq: load invite
 tq -> sdk: Connect (send invitation)
 
-alt Accept
-    note over evcx,m
-    TODO: REVIEW THIS FLOW?
-    This is correct
-    end note
-  alt Accept (X sec delay)
+
+alt Accept (X sec delay)
     magent -> magent: (delay X s)
     magent -> evcx: <AcceptConnectionOffer>
 
@@ -71,15 +69,16 @@ alt Accept
     mwallet -> mwallet: Store in Wallet (Member)
     mwallet -> evcx: Connection Finalized
     evcx -> evcx: Store in Wallet (CULedger)
-'    api -> evcx: Connection.create (REAL????)
+    '    api -> evcx: Connection.create (REAL????)
     evcx -> api: update Connection.State
-  else Deny (X = -1)
-    note over evcx, magent
-    no response sent (leads to timeout)
-    end note
-    evcx -> evcx: (timeout)
-    evcx -> api: update Connection.State
+else Deny (X = -1)
+note over evcx, magent
+no response sent (leads to timeout)
+end note
+evcx -> evcx: (timeout)
+evcx -> api: update Connection.State
 end
+
 
 == SEND CRED ==
 
@@ -98,17 +97,24 @@ alt Accept
     CredOffer/OfferAccept
     process completes
     end note
+    evcx -> api: set onboarded
   else FAILURE
     note over evcx,magent
     what happens now?
     Wallet does not contain cred so can't respond to auth request
     end note
+    evcx -> api: set failed (TODO: failed??)
 
 else Deny
   evcx -> evcx: (timeout)
 
 end
 evcx -> api: <results>
+
+td -> td: TODO: POLL for memberStatus (onboarded | onboarding)
+
+
+
 th -> api: Poll for onboarded?
 == TEARDOWN ==
 
