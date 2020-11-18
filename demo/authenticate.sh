@@ -20,4 +20,4 @@ if [ -z $MEMBERID ]; then
 fi
 
 AUTHENTICATE=`cd /opt/culedger-core/demo/oauth/ && ./authenticate.sh -i $MEMBERID`
-echo $AUTHENTICATE
+echo $AUTHENTICATE > $MEMBERID/authenticate.json

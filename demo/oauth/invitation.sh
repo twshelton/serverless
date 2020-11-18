@@ -48,10 +48,11 @@ TOKEN=$(curl -s -X POST \
         -d "client_secret=$SECRET" \
         "https://login.microsoftonline.com/$TENANTID/oauth2/token" | jq -r .access_token)
 
-curl -k \
+curl -v -k \
   -H "Content-Type: application/json" \
   -H "Ocp-Apim-Subscription-Key: $SUBSCRIPTIONKEY" \
+  -H "clientId: CentralWalletPOCKeyVault" \
   -H "Authorization: Bearer $TOKEN" \
   -X POST \
   -d "$INPUT_JSON" \
-  "$ENDPOINT/member/$MEMBERID/createInvitation"
+  "$ENDPOINT/member/$MEMBERID/createInvitation?code=$CODE"

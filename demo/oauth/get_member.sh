@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 source ./config.sh
@@ -30,7 +31,7 @@ TOKEN=$(curl -s -X POST \
 
 curl -v \
   -d '' \
-  -X PUT \
+  -X GET \
   -H "clientId: CentralWalletPOCKeyVault" \
   -H "Authorization: Bearer $TOKEN" \
-  "$ENDPOINT/member/$MEMBERID/authenticate?code=$CODE"
+  "$ENDPOINT/member/$MEMBERID"

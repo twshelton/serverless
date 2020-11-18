@@ -6,4 +6,4 @@ class CustomAdapter(logging.LoggerAdapter):
     'connid' key, whose value in brackets is prepended to the log message.
     """
     def process(self, msg, kwargs):
-        return '[%s] [%s] %s' % (self.extra.get('jobId', None), self.extra['member_id'], msg), kwargs
+        return '[%s] %s' % (self.extra['member_id'], msg), kwargs

@@ -43,7 +43,8 @@ RUN apt-get -y update && apt-get -y install \
 RUN pip3 install wheel &&\
     pip3 install python3-indy &&\
     pip3 install python3-wrapper-vcx &&\
-    pip3 install azure-storage-queue
+    pip3 install azure-storage-queue &&\
+    pip3 install opencensus-ext-azure
 
 ADD . /opt/culedger-core/
 

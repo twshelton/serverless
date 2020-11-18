@@ -1,4 +1,7 @@
+
 #!/bin/bash
+
+set -e
 
 while getopts :i: opt; do
   case "${opt}" in
@@ -19,17 +22,7 @@ if [ -z $MEMBERID ]; then
   exit
 fi
 
-INVITATION=`cat $MEMBERID/invite.json | jq -r .invitationJSON`
-JOBID=`cat $MEMBERID/invite.json | jq -r .jobId`
-
-PACKAGE=$(cat <<EOF
-{
-  "memberId": "$MEMBERID",
-  "invitation": $INVITATION,
-  "jobId": "$JOBID"
-}
-EOF
-)
-#need to encode the message and then remove the line breaks
-Message=`echo $PACKAGE | base64 | awk 'BEGIN{ORS="";} {print}'`
-az storage message put --queue-name="connection-$MEMBERID" --connection-string=$AZURE_STORAGE_CONNECTION_STRING --content=$Message 
+MEMBER=`cd /opt/culedger-core/demo/oauth/ && ./get_member.sh -i $MEMBERID`
+echo $MEMBER > $MEMBERID/membert_status.json
+MEMBER_STATUS=`echo $MEMBER | jq -r .memberStatus`
+[ $? -eq 0 ] && echo "$MEMBER" || echo "Not Found"

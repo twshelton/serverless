@@ -23,28 +23,33 @@ logging.getLogger("vcx").setLevel(logging.CRITICAL)
 adapter=None
 logger = logging.getLogger(__name__)
 connection_to_memberpass=None
+jobId=None
 
 async def main():
-
+    global adapter
     decoded = json.loads(base64.b64decode(sys.argv[1]))
     member = decoded["memberId"]
     adapter = CustomAdapter(logger,{'member_id': member}) 
-    adapter.info("initializing Vcx for %s", member)
+    adapter.info("initializing Vcx")
     #create wallet and initialize
     await init(member)
 
     while True:
         await poll(member, decoded)
+        if jobId != None:
+            adapter = CustomAdapter(logger,{'jobId': jobId, 'member_id': member})
+
         sleep(2)
 
 async def poll(member, decoded):
     global connection_to_memberpass
+    global jobId
     try:
         if connection_to_memberpass == None:
-            logger.info("checking connection requests for %s", member)
+            adapter.info("checking for connection requests")
             connect_response_delay = await get_config(decoded, "connect", "respondConnectionOfferAfter")
-            connection_to_memberpass = await checkInvitation(member, connect_response_delay)
-            logger.info(connection_to_memberpass)
+            jobId, connection_to_memberpass = await checkInvitation(member, connect_response_delay)
+            adapter.info("connection established: %s", connection_to_memberpass)
         else:
             #logger.info("checking credential offers for %s", member)
             offer_response_delay = await get_config(decoded, "respondAuth", "respondAfter")

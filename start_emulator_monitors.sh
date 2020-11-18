@@ -35,7 +35,7 @@ members = {}
 
 files = glob.glob('./running/*')
 for f in files:
-    os.remove(f)
+    shutil.rmtree(f)
 
 async def main():
 
@@ -55,8 +55,9 @@ async def check_init_queue():
                     if not os.path.exists(f'./running/{member}'):
                         queue_name = "connection-" + member
                         member_queue = QueueClient.from_connection_string(connect_str, queue_name)
-                        member_queue.create_queue()
                         logger.info("Creating queue: %s", queue_name)
+                        member_queue.create_queue()
+                        logger.info("Created queue: %s", queue_name)
 
                         proc = subprocess.Popen(["./member_emulator/member.py", message.content, member,"&"])
                         members[member] = proc

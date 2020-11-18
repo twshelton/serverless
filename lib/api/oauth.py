@@ -2,8 +2,10 @@ import asyncio
 import json
 import requests
 import logging
+import urllib3
 
 OAUTH_URL="https://login.microsoftonline.com/e7b6a690-d322-4085-b6d6-d0a4f70f0d7b/oauth2/token"
+urllib3.disable_warnings()
 
 async def getOauthToken(config):
 

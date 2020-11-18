@@ -19,5 +19,5 @@ if [ -z $MEMBERID ]; then
   exit
 fi
 
-INVITATION=`cd /opt/culedger-core/demo/oauth/ && ./invitation.sh -i $MEMBERID | jq -r .invitationJSON > ../invite.json` 
+INVITATION=`cd /opt/culedger-core/demo/oauth/ && rm -f ../invite.json && ./invitation.sh -i $MEMBERID > ../$MEMBERID/invite.json` 
 echo "Invitation created and stored in invite.json"

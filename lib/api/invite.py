@@ -3,7 +3,7 @@ import json
 import requests
 import logging
 
-from api.oauth import getOauthToken
+from lib.api.oauth import getOauthToken
 
 async def createInvitation(config):
 
@@ -13,7 +13,7 @@ async def createInvitation(config):
     # build headers and data payload for upcoming http POST to CULedger.Identity for Onboarding.
     headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + oauthToken}
 
-    logger.info("Getting invitation with config: %s", config)
+    #logger.info("Getting invitation with config: %s", config)
 
     invitationData = {
         "memberId": config["memberId"],
@@ -33,6 +33,6 @@ async def createInvitation(config):
     inviteEndpoint ="{}member/{}/createInvitation".format(config["endpoint"], config["memberId"])
 
     inviteResponse = requests.post(inviteEndpoint, data=json.dumps(invitationData), headers=headers)
-
-    invitationResponse = inviteResponse.json()
-    return invitationResponse['invitationJSON']
+    if inviteResponse.status_code == 200:
+        invitationResponse = inviteResponse.json()
+        return invitationResponse['invitationJSON']

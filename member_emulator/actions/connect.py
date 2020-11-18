@@ -24,9 +24,9 @@ async def checkInvitation(member, connect_response_delay):
             try:
                 decoded = json.loads(base64.b64decode(message.content))
                 member = decoded["memberId"]
-                connection = await connect(member, decoded["invitation"], connect_response_delay)
+                connection = await connect(member, decoded["jobId"], decoded["invitation"], connect_response_delay)
                 queue_client.delete_message(message)
-                return connection
+                return decoded["jobId"], connection
             except Exception as ex:
                 #TODO need to move this to dead letter queue for review
                 dead_letter.send_message(message)
@@ -41,9 +41,9 @@ async def getPwDID(connection_to_memberpass):
 async def deserialize(connection):
     return await Connection.deserialize(connection)
 
-async def connect(member, invitation, respond_after):
+async def connect(member, jobId, invitation, respond_after):
 
-    adapter = CustomAdapter(logger,{'member_id': member}) 
+    adapter = CustomAdapter(logger,{'jobId': jobId, 'member_id': member}) 
     connection_to_memberpass = None
 
     connectionFile = f'./working_config/{member}/connection.json'
@@ -53,22 +53,22 @@ async def connect(member, invitation, respond_after):
             sleep(respond_after)
             adapter.info("Resuming after pausing for %s seconds", respond_after)
             #try to make sure we have a valid invitation
-            if "id" in invitation:
-                adapter.info("connecting based on invite for %s", member)
-                connection_to_memberpass = await Connection.create_with_details('memberpass', json.dumps(invitation))
-                await connection_to_memberpass.connect('{"use_public_did": true}')
+            adapter.info("connecting based on invite for %s", member)
+            connection_to_memberpass = await Connection.create_with_details('memberpass', json.dumps(invitation))
+            await connection_to_memberpass.connect('{"use_public_did": true}')
 
-                connection_state = await connection_to_memberpass.update_state()
-                while connection_state != State.Accepted:
-                    sleep(2)
-                    await connection_to_memberpass.update_state()
-                    connection_state = await connection_to_memberpass.get_state()
+            connection_state = await connection_to_memberpass.update_state()
+            while connection_state != State.Accepted:
+                adapter.info("connection state: %s", connection_state)
+                sleep(2)
+                await connection_to_memberpass.update_state()
+                connection_state = await connection_to_memberpass.get_state()
 
-                connection = await connection_to_memberpass.serialize()
-                adapter.info("saving connection for %s", member)
-                f = open(connectionFile, "w")
-                f.write(json.dumps(connection))
-                f.close()
+            connection = await connection_to_memberpass.serialize()
+            adapter.info("saving connection for %s", member)
+            f = open(connectionFile, "w")
+            f.write(json.dumps(connection))
+            f.close()
     else:
         adapter.info("Load existing connection file for %s", member)
         connection_string = open(connectionFile,'r').read()

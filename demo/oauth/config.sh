@@ -5,7 +5,9 @@
 CLIENTID="b32c5de9-b4d4-431c-b5b8-692c8dff3d13"
 SECRET="4oOklTl9zyZGQ.8Et7fUlWh.F0U7BC3y--"
 TENANTID="e7b6a690-d322-4085-b6d6-d0a4f70f0d7b"
-ENDPOINT="https://stress-dev.culedgerapi.com/CULedger/CULedger.Identity/0.3.0"
+ENDPOINT1="http://localhost:7071/api"
+ENDPOINT="https://memberpass-api.azurewebsites.net/api"
+CODE="nMeOMariKmmEJU7AqiV0/CJjITxGM411YVW4d1lrGaBwY9nFT6TqmA=="
 # ============================================================================================
 
 echo "${CLIENTID:?REQUIRED: client id provided by CULedger}" > /dev/null
