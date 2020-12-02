@@ -1,30 +1,30 @@
 import asyncio
 import json
 import requests
-import logging
 
 from lib.api.oauth import getOauthToken
 
-from lib.custom_adapter import CustomAdapter
 
-async def authenticate(config):
-
-    logger = logging.getLogger(__name__)
-    adapter = CustomAdapter(logger,{'member_id': config["memberId"]}) 
+async def authenticate(config, logger):
 
     oauthToken = await getOauthToken(config)
 
     # build headers and data payload for upcoming http POST to CULedger.Identity for Onboarding.
-    headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + oauthToken}
+    headers = {
+            'Content-Type': 'application/json', 
+            'Authorization': 'Bearer ' + oauthToken,
+            'clientId': "CentralWalletPOCKeyVault"
+            }
 
     #logger.info("Getting invitation with config: %s", config)
 
-    authEndpoint ="{}member/{}/authenticate".format(config["endpoint"], config["memberId"])
+    code="nMeOMariKmmEJU7AqiV0/CJjITxGM411YVW4d1lrGaBwY9nFT6TqmA=="
+    authEndpoint ="{}member/{}/authenticate?code={}".format(config["endpoint"], config["memberId"],code)
 
     authResponse = requests.put(authEndpoint, headers=headers)
     if authResponse.status_code == 200:
         authenticateResponse = authResponse.json()
-        adapter.info("Success from authenticate: %s", authenticateResponse)
+        logger.info("Success from authenticate: %s", authenticateResponse)
         return authenticateResponse
     else:
-        adapter.info("Error from authenticate")
+        logger.info("Error from authenticate")

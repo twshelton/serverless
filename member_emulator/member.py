@@ -20,53 +20,55 @@ logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(l
 logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
 logging.getLogger("vcx").setLevel(logging.CRITICAL)
 
-adapter=None
-logger = logging.getLogger(__name__)
 connection_to_memberpass=None
 jobId=None
 
 async def main():
-    global adapter
     decoded = json.loads(base64.b64decode(sys.argv[1]))
     member = decoded["memberId"]
-    adapter = CustomAdapter(logger,{'member_id': member}) 
-    adapter.info("initializing Vcx")
+    logger = CustomAdapter(__name__, jobId, member, "TestHarness")
+    logger.info("initializing Vcx")
+
     #create wallet and initialize
-    await init(member)
-
-    while True:
-        await poll(member, decoded)
+    await init(member, logger)
+    time_start = time.time()
+    while time.time() - time_start > 15:
+        # set 45 second 
+        await poll(member, decoded, logger)
         if jobId != None:
-            adapter = CustomAdapter(logger,{'jobId': jobId, 'member_id': member})
+            logger = CustomAdapter(__name__, jobId, member, "TestHarness")
 
-        sleep(2)
+        sleep(5)
 
-async def poll(member, decoded):
+async def poll(member, decoded, logger):
     global connection_to_memberpass
     global jobId
     try:
         if connection_to_memberpass == None:
-            adapter.info("checking for connection requests")
+            logger.info("checking for connection requests")
             connect_response_delay = await get_config(decoded, "connect", "respondConnectionOfferAfter")
-            jobId, connection_to_memberpass = await checkInvitation(member, connect_response_delay)
-            adapter.info("connection established: %s", connection_to_memberpass)
+            connected = await checkInvitation(member, connect_response_delay, logger)
+            if connected != None:
+                jobId = connected["jobId"]
+                connection_to_memberpass = connected["connection"]
+                logger.info("connection established: %s", connection_to_memberpass)
         else:
-            #logger.info("checking credential offers for %s", member)
+            logger.info("checking credential offers for %s", member)
             offer_response_delay = await get_config(decoded, "respondAuth", "respondAfter")
-            await checkOffers(member, connection_to_memberpass, offer_response_delay)
+            await checkOffers(member, connection_to_memberpass, offer_response_delay, logger)
 
-            #logger.info("checking proof requests for %s", member)
+            logger.info("checking proof requests for %s", member)
             proof_response_delay = await get_config(decoded, "respondProof", "respondAfter")
-            await checkProofs(member, connection_to_memberpass, proof_response_delay)
+            await checkProofs(member, connection_to_memberpass, proof_response_delay, logger)
 
             #logger.info("checking secured messages for %s", member)
-            message_response_delay = await get_config(decoded, "respondSimpleAuth", "respondAfter")
-            await checkMessages(member, connection_to_memberpass, message_response_delay)
+            #message_response_delay = await get_config(decoded, "respondSimpleAuth", "respondAfter")
+            #await checkMessages(member, connection_to_memberpass, message_response_delay, logger)
 
     except Exception as err:
         tb = traceback.format_exc()
-        logging.error(err)
-        logging.error(tb)
+        logger.error(err)
+        logger.error(tb)
 
 async def get_config(config, desired, timer):
     for action in config["actions"]:

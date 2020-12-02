@@ -6,6 +6,7 @@ ARG AZURE_STORAGE_CONNECTION_STRING
 ARG GENESIS_PATH=/opt/culedger-core/sovrin/pool_transactions_live_genesis
 ARG INSTITUTION_NAME=TestHarness
 ARG INSTITUTION_LOGO=http://example.com/logo.png
+ARG APPINSIGHTS_INSTRUMENTATIONKEY=22e651b6-7f67-451c-8a38-62ac0e027308
 
 # install dependencies
 RUN apt-get -y update && apt-get install -y --no-install-recommends \
@@ -38,7 +39,8 @@ RUN apt-get -y update && apt-get -y install \
   vim \
   zip \
   jq \
-  azure-cli
+  azure-cli \
+  pwgen
 
 RUN pip3 install wheel &&\
     pip3 install python3-indy &&\
@@ -52,6 +54,7 @@ ENV AZURE_STORAGE_CONNECTION_STRING ${AZURE_STORAGE_CONNECTION_STRING}
 ENV GENESIS_PATH ${GENESIS_PATH}
 ENV INSTITUTION_NAME ${INSTITUTION_NAME}
 ENV INSTITUTION_LOGO ${INSTITUTION_LOGO}
+ENV APPINSIGHTS_INSTRUMENTATIONKEY ${APPINSIGHTS_INSTRUMENTATIONKEY}
 
 ENTRYPOINT ["/opt/culedger-core/scripts/entrypoint.sh"]
 CMD ["cd .. && ./start_emulator_monitors.sh"]
