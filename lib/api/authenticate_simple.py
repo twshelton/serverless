@@ -1,17 +1,19 @@
 import asyncio
 import json
 import requests
-import logging
 
 from lib.api.oauth import getOauthToken
 
-async def authenticate(config):
+async def authenticate(config, logger, resource="authenticateSimple"):
 
-    logger = logging.getLogger(__name__)
-    oauthToken = await getOauthToken(config)
+    #oauthToken = await getOauthToken(config)
 
     # build headers and data payload for upcoming http POST to CULedger.Identity for Onboarding.
-    headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + oauthToken}
+    headers = {
+            'Content-Type': 'application/json', 
+            'clientId': "CentralWalletPOCKeyVault",
+            'Ocp-Apim-Subscription-Key': config["ocp-apim-subscription-key"]
+            }
 
     #logger.info("Getting invitation with config: %s", config)
 
@@ -25,7 +27,8 @@ async def authenticate(config):
             "expires": "2020-01-29T19:15:17.897Z"
             }
 
-    authEndpoint ="{}member/{}/authenticateSimple".format(config["endpoint"], config["memberId"])
+    code="nMeOMariKmmEJU7AqiV0/CJjITxGM411YVW4d1lrGaBwY9nFT6TqmA=="
+    authEndpoint ="{}member/{}/{}?code={}".format(config["endpoint"], config["memberId"], resource, code)
 
     authResponse = requests.put(authEndpoint, data=json.dumps(authSimpleChallenge), headers=headers)
     if authResponse.status_code == 200:

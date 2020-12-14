@@ -15,12 +15,15 @@ from azure.storage.queue import QueueClient
 import signal
 
 from lib.custom_adapter import CustomAdapter
+from lib.queue_builder import builder
 
+logger = CustomAdapter(__name__, None, None, "TestHarnessManager")
+init_queue_client = builder("initialize", logger)
+teardown_queue_client = builder("teardown", logger)
+init_dead_letter = builder("initialize-error", logger)
+teardown_dead_letter = builder("teardown-error", logger)
 connect_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
-init_queue_client = QueueClient.from_connection_string(connect_str, "initialize")
-teardown_queue_client = QueueClient.from_connection_string(connect_str, "teardown")
-init_dead_letter = QueueClient.from_connection_string(connect_str, "initialize-error")
-teardown_dead_letter = QueueClient.from_connection_string(connect_str, "teardown-error")
+
 member = None
 members = {}
 
@@ -29,11 +32,12 @@ for f in files:
     shutil.rmtree(f)
 
 async def main(logger):
-	logger.info("Looking for jobs to process")
-	while True:
-		await check_init_queue(logger)
-		await check_teardown_queue(logger)
-		sleep(2)
+  logger.info("Looking for jobs to process")
+	
+  while True:
+    await check_init_queue(logger)
+    await check_teardown_queue(logger)
+    sleep(2)
 
 async def check_init_queue(logger):
     try:
@@ -117,7 +121,6 @@ async def check_teardown_queue(logger):
 if __name__ == '__main__':
   try:
     loop = asyncio.get_event_loop()
-    logger = CustomAdapter(__name__, None, None, "TestHarnessManager")
     loop.run_until_complete(main(logger))
     sleep(1)
   except KeyboardInterrupt:

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from time import sleep
+import time
 import asyncio
 import logging
 import json 
@@ -32,20 +32,20 @@ async def main():
     #create wallet and initialize
     await init(member, logger)
     time_start = time.time()
-    while time.time() - time_start > 15:
+    while True:
         # set 45 second 
         await poll(member, decoded, logger)
         if jobId != None:
             logger = CustomAdapter(__name__, jobId, member, "TestHarness")
 
-        sleep(5)
+        time.sleep(5)
 
 async def poll(member, decoded, logger):
     global connection_to_memberpass
     global jobId
     try:
         if connection_to_memberpass == None:
-            logger.info("checking for connection requests")
+            logger.info(f"checking for connection requests: {member}")
             connect_response_delay = await get_config(decoded, "connect", "respondConnectionOfferAfter")
             connected = await checkInvitation(member, connect_response_delay, logger)
             if connected != None:
@@ -53,11 +53,11 @@ async def poll(member, decoded, logger):
                 connection_to_memberpass = connected["connection"]
                 logger.info("connection established: %s", connection_to_memberpass)
         else:
-            logger.info("checking credential offers for %s", member)
+            logger.info(f"checking credential offers for {member}")
             offer_response_delay = await get_config(decoded, "respondAuth", "respondAfter")
             await checkOffers(member, connection_to_memberpass, offer_response_delay, logger)
 
-            logger.info("checking proof requests for %s", member)
+            logger.info(f"checking proof requests for {member}")
             proof_response_delay = await get_config(decoded, "respondProof", "respondAfter")
             await checkProofs(member, connection_to_memberpass, proof_response_delay, logger)
 
@@ -80,4 +80,4 @@ async def get_config(config, desired, timer):
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
-    sleep(1)
+    time.sleep(1)
